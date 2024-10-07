@@ -1,28 +1,32 @@
 import java.util.Random;
 
 public class NeuralNetwork {
-    private int inputSize, hiddenSize1, hiddenSize2, outputSize;
-    private double[][] weightsInputHidden1, weightsHidden1Hidden2, weightsHiddenOutput;
-    private double[] hiddenBias1, hiddenBias2, outputBias;
-    private double learningRate = 0.01;
+    private int inputSize, hiddenSize1, hiddenSize2,hiddenSize3, outputSize;
+    private double[][] weightsInputHidden1, weightsHidden1Hidden2,weightsHidden2Hidden3, weightsHiddenOutput;
+    private double[] hiddenBias1, hiddenBias2,hiddenBias3, outputBias;
+    private double learningRate = 0.02;
 
-    public NeuralNetwork(int inputSize, int hiddenSize1, int hiddenSize2, int outputSize) {
+    public NeuralNetwork(int inputSize, int hiddenSize1, int hiddenSize2,int hiddenSize3, int outputSize) {
         this.inputSize = inputSize;
         this.hiddenSize1 = hiddenSize1;
         this.hiddenSize2 = hiddenSize2;
+        this.hiddenSize3=hiddenSize3;
         this.outputSize = outputSize;
 
         // Initialize weights and biases using Xavier initialization
         weightsInputHidden1 = new double[hiddenSize1][inputSize];
         weightsHidden1Hidden2 = new double[hiddenSize2][hiddenSize1];
+        weightsHidden2Hidden3=new double[hiddenSize3][hiddenSize2];
         weightsHiddenOutput = new double[outputSize][hiddenSize2];
         hiddenBias1 = new double[hiddenSize1];
         hiddenBias2 = new double[hiddenSize2];
+        hiddenBias3=new double[hiddenSize3];
         outputBias = new double[outputSize];
 
         Random random = new Random();
         initializeWeights(weightsInputHidden1, inputSize, hiddenSize1, random);
         initializeWeights(weightsHidden1Hidden2, hiddenSize1, hiddenSize2, random);
+        initializeWeights(weightsHidden2Hidden3,hiddenSize2,hiddenSize3,random);
         initializeWeights(weightsHiddenOutput, hiddenSize2, outputSize, random);
     }
 

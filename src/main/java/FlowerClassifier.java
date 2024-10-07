@@ -10,11 +10,12 @@ public class FlowerClassifier {
     public static void main(String[] args) {
         // Example: 150x150 pixel images flattened to 22500-length arrays
         int inputSize = 150 * 150; // Flattened image size
-        int hiddenSize1 = 128;       // Hidden layer size
-        int hiddenSize2= 128;
+        int hiddenSize1 = 200;       // Hidden layer size
+        int hiddenSize2= 200;
+        int hiddenSize3=200;
         int outputSize = CLASS_NAMES.length; // Number of flower classes
 
-        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize1,hiddenSize2, outputSize); // Using the NeuralNetwork class
+        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize1,hiddenSize2,hiddenSize3, outputSize); // Using the NeuralNetwork class
 
         // Load flower images and labels into arrays
         double[][] trainData = loadFlowerImages("./train/");
