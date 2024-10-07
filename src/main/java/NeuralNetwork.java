@@ -1,109 +1,159 @@
 import java.util.Random;
 
 public class NeuralNetwork {
-    private int inputSize, hiddenSize, outputSize;
-    private double[][] weightsInputHidden, weightsHiddenOutput;
-    private double[] hiddenBias, outputBias;
+    private int inputSize, hiddenSize1, hiddenSize2, outputSize;
+    private double[][] weightsInputHidden1, weightsHidden1Hidden2, weightsHiddenOutput;
+    private double[] hiddenBias1, hiddenBias2, outputBias;
     private double learningRate = 0.01;
 
-    public NeuralNetwork(int inputSize, int hiddenSize, int outputSize) {
+    public NeuralNetwork(int inputSize, int hiddenSize1, int hiddenSize2, int outputSize) {
         this.inputSize = inputSize;
-        this.hiddenSize = hiddenSize;
+        this.hiddenSize1 = hiddenSize1;
+        this.hiddenSize2 = hiddenSize2;
         this.outputSize = outputSize;
 
-        // Initialize weights and biases randomly
-        weightsInputHidden = new double[hiddenSize][inputSize];
-        weightsHiddenOutput = new double[outputSize][hiddenSize];
-        hiddenBias = new double[hiddenSize];
+        // Initialize weights and biases using Xavier initialization
+        weightsInputHidden1 = new double[hiddenSize1][inputSize];
+        weightsHidden1Hidden2 = new double[hiddenSize2][hiddenSize1];
+        weightsHiddenOutput = new double[outputSize][hiddenSize2];
+        hiddenBias1 = new double[hiddenSize1];
+        hiddenBias2 = new double[hiddenSize2];
         outputBias = new double[outputSize];
 
         Random random = new Random();
-        for (int i = 0; i < hiddenSize; i++) {
-            for (int j = 0; j < inputSize; j++) {
-                weightsInputHidden[i][j] = random.nextGaussian();
-            }
-        }
+        initializeWeights(weightsInputHidden1, inputSize, hiddenSize1, random);
+        initializeWeights(weightsHidden1Hidden2, hiddenSize1, hiddenSize2, random);
+        initializeWeights(weightsHiddenOutput, hiddenSize2, outputSize, random);
+    }
 
-        for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j < hiddenSize; j++) {
-                weightsHiddenOutput[i][j] = random.nextGaussian();
+    private void initializeWeights(double[][] weights, int inputSize, int outputSize, Random random) {
+        double stddev = Math.sqrt(2.0 / (inputSize + outputSize));
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] = random.nextGaussian() * stddev;
             }
         }
     }
 
-    // Activation function: Sigmoid
-    private double sigmoid(double x) {
-        return 1.0 / (1.0 + Math.exp(-x));
+    // Activation function: ReLU
+    private double relu(double x) {
+        return Math.max(0, x);
     }
 
-    // Derivative of sigmoid (for backpropagation)
-    private double sigmoidDerivative(double x) {
-        return x * (1 - x);
+    // Derivative of ReLU (for backpropagation)
+    private double reluDerivative(double x) {
+        return x > 0 ? 1 : 0;
+    }
+
+    // Activation function: Softmax
+    private double[] softmax(double[] x) {
+        double max = Double.NEGATIVE_INFINITY;
+        for (double val : x) {
+            if (val > max) max = val;
+        }
+        double sum = 0;
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = Math.exp(x[i] - max);
+            sum += result[i];
+        }
+        for (int i = 0; i < result.length; i++) {
+            result[i] /= sum;
+        }
+        return result;
     }
 
     // Forward propagation
     public double[] forward(double[] input) {
-        double[] hiddenLayer = new double[hiddenSize];
+        double[] hiddenLayer1 = new double[hiddenSize1];
+        double[] hiddenLayer2 = new double[hiddenSize2];
         double[] outputLayer = new double[outputSize];
 
-        // Input to hidden
-        for (int i = 0; i < hiddenSize; i++) {
-            hiddenLayer[i] = 0;
+        // Input to first hidden layer
+        for (int i = 0; i < hiddenSize1; i++) {
+            hiddenLayer1[i] = 0;
             for (int j = 0; j < inputSize; j++) {
-                hiddenLayer[i] += input[j] * weightsInputHidden[i][j];
+                hiddenLayer1[i] += input[j] * weightsInputHidden1[i][j];
             }
-            hiddenLayer[i] += hiddenBias[i];
-            hiddenLayer[i] = sigmoid(hiddenLayer[i]);
+            hiddenLayer1[i] += hiddenBias1[i];
+            hiddenLayer1[i] = relu(hiddenLayer1[i]);
         }
 
-        // Hidden to output
+        // First hidden layer to second hidden layer
+        for (int i = 0; i < hiddenSize2; i++) {
+            hiddenLayer2[i] = 0;
+            for (int j = 0; j < hiddenSize1; j++) {
+                hiddenLayer2[i] += hiddenLayer1[j] * weightsHidden1Hidden2[i][j];
+            }
+            hiddenLayer2[i] += hiddenBias2[i];
+            hiddenLayer2[i] = relu(hiddenLayer2[i]);
+        }
+
+        // Second hidden layer to output layer
         for (int i = 0; i < outputSize; i++) {
             outputLayer[i] = 0;
-            for (int j = 0; j < hiddenSize; j++) {
-                outputLayer[i] += hiddenLayer[j] * weightsHiddenOutput[i][j];
+            for (int j = 0; j < hiddenSize2; j++) {
+                outputLayer[i] += hiddenLayer2[j] * weightsHiddenOutput[i][j];
             }
             outputLayer[i] += outputBias[i];
-            outputLayer[i] = sigmoid(outputLayer[i]);
         }
 
-        return outputLayer;
+        return softmax(outputLayer);
     }
 
     // Backpropagation
     public void backward(double[] input, double[] targetOutput, double[] output) {
-        double[] hiddenLayer = new double[hiddenSize];
-        double[] outputLayer = new double[outputSize];
+        double[] hiddenLayer1 = new double[hiddenSize1];
+        double[] hiddenLayer2 = new double[hiddenSize2];
         double[] outputError = new double[outputSize];
-        double[] hiddenError = new double[hiddenSize];
+        double[] hiddenError2 = new double[hiddenSize2];
+        double[] hiddenError1 = new double[hiddenSize1];
 
         // Calculate output error
         for (int i = 0; i < outputSize; i++) {
             outputError[i] = targetOutput[i] - output[i];
         }
 
-        // Backpropagate to hidden layer
-        for (int i = 0; i < hiddenSize; i++) {
-            hiddenError[i] = 0;
+        // Backpropagate to second hidden layer
+        for (int i = 0; i < hiddenSize2; i++) {
+            hiddenError2[i] = 0;
             for (int j = 0; j < outputSize; j++) {
-                hiddenError[i] += outputError[j] * weightsHiddenOutput[j][i];
+                hiddenError2[i] += outputError[j] * weightsHiddenOutput[j][i];
             }
-            hiddenError[i] *= sigmoidDerivative(hiddenLayer[i]);
+            hiddenError2[i] *= reluDerivative(hiddenLayer2[i]);
         }
 
-        // Update weights and biases between hidden and output layer
+        // Backpropagate to first hidden layer
+        for (int i = 0; i < hiddenSize1; i++) {
+            hiddenError1[i] = 0;
+            for (int j = 0; j < hiddenSize2; j++) {
+                hiddenError1[i] += hiddenError2[j] * weightsHidden1Hidden2[j][i];
+            }
+            hiddenError1[i] *= reluDerivative(hiddenLayer1[i]);
+        }
+
+        // Update weights and biases between second hidden and output layer
         for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j < hiddenSize; j++) {
-                weightsHiddenOutput[i][j] += learningRate * outputError[i] * hiddenLayer[j];
+            for (int j = 0; j < hiddenSize2; j++) {
+                weightsHiddenOutput[i][j] += learningRate * outputError[i] * hiddenLayer2[j];
             }
             outputBias[i] += learningRate * outputError[i];
         }
 
-        // Update weights and biases between input and hidden layer
-        for (int i = 0; i < hiddenSize; i++) {
-            for (int j = 0; j < inputSize; j++) {
-                weightsInputHidden[i][j] += learningRate * hiddenError[i] * input[j];
+        // Update weights and biases between first hidden and second hidden layer
+        for (int i = 0; i < hiddenSize2; i++) {
+            for (int j = 0; j < hiddenSize1; j++) {
+                weightsHidden1Hidden2[i][j] += learningRate * hiddenError2[i] * hiddenLayer1[j];
             }
-            hiddenBias[i] += learningRate * hiddenError[i];
+            hiddenBias2[i] += learningRate * hiddenError2[i];
+        }
+
+        // Update weights and biases between input and first hidden layer
+        for (int i = 0; i < hiddenSize1; i++) {
+            for (int j = 0; j < inputSize; j++) {
+                weightsInputHidden1[i][j] += learningRate * hiddenError1[i] * input[j];
+            }
+            hiddenBias1[i] += learningRate * hiddenError1[i];
         }
     }
 
@@ -117,6 +167,7 @@ public class NeuralNetwork {
             if (epoch % 100 == 0) {
                 System.out.println("Epoch " + epoch + " completed");
             }
+            printProgressBar(epoch + 1, epochs);
         }
     }
 
@@ -132,5 +183,25 @@ public class NeuralNetwork {
             }
         }
         return predictedClass;
+    }
+    private void printProgressBar(int current, int total) {
+        int progressBarLength = 50; // Length of the progress bar
+        int progress = (int) ((double) current / total * progressBarLength);
+
+        StringBuilder progressBar = new StringBuilder("[");
+        for (int i = 0; i < progressBarLength; i++) {
+            if (i < progress) {
+                progressBar.append("=");
+            } else {
+                progressBar.append(" ");
+            }
+        }
+        progressBar.append("] ").append(current).append("/").append(total).append(" epochs");
+
+        // Print the progress bar
+        System.out.print("\r" + progressBar.toString());
+        if (current == total) {
+            System.out.println();
+        }
     }
 }
