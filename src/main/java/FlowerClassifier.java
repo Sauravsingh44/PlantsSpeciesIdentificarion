@@ -2,19 +2,19 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
-
 import javax.imageio.ImageIO;
 
 public class FlowerClassifier {
     private static final String[] CLASS_NAMES = {"bougainvillea", "daisy", "frangipani", "hibiscus", "rose", "sunflower", "zinnia"};
 
     public static void main(String[] args) {
-        // Example: 250x250 pixel images flattened to 62500-length arrays
-        int inputSize = 250 * 250; // Flattened image size
-        int hiddenSize = 128;       // Hidden layer size
+        // Example: 150x150 pixel images flattened to 22500-length arrays
+        int inputSize = 150 * 150; // Flattened image size
+        int hiddenSize1 = 128;       // Hidden layer size
+        int hiddenSize2= 128;
         int outputSize = CLASS_NAMES.length; // Number of flower classes
 
-        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize, outputSize); // Using the NeuralNetwork class
+        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize1,hiddenSize2, outputSize); // Using the NeuralNetwork class
 
         // Load flower images and labels into arrays
         double[][] trainData = loadFlowerImages("./train/");
@@ -30,8 +30,8 @@ public class FlowerClassifier {
             return;
         }
 
-        // Train the neural network for 1000 epochs
-        nn.train(trainData, trainLabels, 500); // Use trainLabels directly
+        // Train the neural network for 500 epochs
+        nn.train(trainData, trainLabels, 300); // Use trainLabels directly
 
         // Test the network with test data
         double[][] testData = loadFlowerImages("./test/");
@@ -74,18 +74,18 @@ public class FlowerClassifier {
                     for (File file : files) {
                         try {
                             BufferedImage img = ImageIO.read(file);
-                            BufferedImage resizedImg = new BufferedImage(250, 250, BufferedImage.TYPE_INT_RGB);
+                            BufferedImage resizedImg = new BufferedImage(150, 150, BufferedImage.TYPE_INT_RGB);
                             Graphics2D g = resizedImg.createGraphics();
-                            g.drawImage(img, 0, 0, 250, 250, null);
+                            g.drawImage(img, 0, 0, 150, 150, null);
                             g.dispose();
 
                             // Convert image to double array (flattened)
-                            double[] pixelValues = new double[250 * 250];
-                            for (int i = 0; i < 250; i++) {
-                                for (int j = 0; j < 250; j++) {
+                            double[] pixelValues = new double[150 * 150];
+                            for (int i = 0; i < 150; i++) {
+                                for (int j = 0; j < 150; j++) {
                                     int rgb = resizedImg.getRGB(j, i);
                                     // Normalize pixel values to [0, 1]
-                                    pixelValues[i * 250 + j] = ((rgb >> 16) & 0xFF) / 255.0; // Red channel
+                                    pixelValues[i * 150 + j] = ((rgb >> 16) & 0xFF) / 255.0; // Red channel
                                 }
                             }
                             images.add(pixelValues);
@@ -144,18 +144,18 @@ public class FlowerClassifier {
     private static int predictFlowerClass(NeuralNetwork nn, String imagePath) {
         try {
             BufferedImage img = ImageIO.read(new File(imagePath));
-            BufferedImage resizedImg = new BufferedImage(250, 250, BufferedImage.TYPE_INT_RGB);
+            BufferedImage resizedImg = new BufferedImage(150, 150, BufferedImage.TYPE_INT_RGB);
             Graphics2D g = resizedImg.createGraphics();
-            g.drawImage(img, 0, 0, 250, 250, null);
+            g.drawImage(img, 0, 0, 150, 150, null);
             g.dispose();
 
             // Convert image to double array (flattened)
-            double[] pixelValues = new double[250 * 250];
-            for (int i = 0; i < 250; i++) {
-                for (int j = 0; j < 250; j++) {
+            double[] pixelValues = new double[150 * 150];
+            for (int i = 0; i < 150; i++) {
+                for (int j = 0; j < 150; j++) {
                     int rgb = resizedImg.getRGB(j, i);
                     // Normalize pixel values to [0, 1]
-                    pixelValues[i * 250 + j] = ((rgb >> 16) & 0xFF) / 255.0; // Red channel
+                    pixelValues[i * 150 + j] = ((rgb >> 16) & 0xFF) / 255.0; // Red channel
                 }
             }
 
