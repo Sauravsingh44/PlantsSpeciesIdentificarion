@@ -10,9 +10,9 @@ public class FlowerClassifier {
     public static void main(String[] args) {
         // Example: 150x150 pixel images flattened to 22500-length arrays
         int inputSize = 150 * 150; // Flattened image size
-        int hiddenSize1 = 200;       // Hidden layer size
-        int hiddenSize2= 200;
-        int hiddenSize3=200;
+        int hiddenSize1 = 512;       // Hidden layer size
+        int hiddenSize2= 512;
+        int hiddenSize3=256;
         int numFilters=32;
         int filterSize=3;
         int poolSize=2;
@@ -35,7 +35,7 @@ public class FlowerClassifier {
         }
 
         // Train the neural network for 500 epochs
-        nn.train(trainData, trainLabels, 10); // Use trainLabels directly
+        nn.train(trainData, trainLabels, 1); // Use trainLabels directly
 
         // Test the network with test data
         double[][] testData = loadFlowerImages("./test/");
