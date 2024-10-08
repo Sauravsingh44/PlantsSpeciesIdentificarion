@@ -13,9 +13,12 @@ public class FlowerClassifier {
         int hiddenSize1 = 200;       // Hidden layer size
         int hiddenSize2= 200;
         int hiddenSize3=200;
+        int numFilters=32;
+        int filterSize=3;
+        int poolSize=2;
         int outputSize = CLASS_NAMES.length; // Number of flower classes
 
-        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize1,hiddenSize2,hiddenSize3, outputSize); // Using the NeuralNetwork class
+        NeuralNetwork nn = new NeuralNetwork(inputSize, hiddenSize1,hiddenSize2,hiddenSize3, outputSize,numFilters,filterSize,poolSize); // Using the NeuralNetwork class
 
         // Load flower images and labels into arrays
         double[][] trainData = loadFlowerImages("./train/");
@@ -32,7 +35,7 @@ public class FlowerClassifier {
         }
 
         // Train the neural network for 500 epochs
-        nn.train(trainData, trainLabels, 300); // Use trainLabels directly
+        nn.train(trainData, trainLabels, 10); // Use trainLabels directly
 
         // Test the network with test data
         double[][] testData = loadFlowerImages("./test/");
