@@ -1,4 +1,4 @@
-# Flower Identification Neural Network
+# Plant Identification Neural Network
 
 ## Overview
 
