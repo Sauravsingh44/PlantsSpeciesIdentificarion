@@ -22,7 +22,7 @@ The neural network architecture consists of the following layers:
 - **Hidden Layers**: Three fully connected hidden layers for further processing of the extracted features.
 - **Output Layer**: Produces probabilities for each flower species using the softmax function.
 
-## Usage
+
 
 ### Prerequisites
 
