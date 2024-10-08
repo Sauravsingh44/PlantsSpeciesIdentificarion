@@ -35,4 +35,4 @@ The neural network architecture consists of the following layers:
 
    ```bash
    git clone <repository-url>
-   cd flower-identification
+   cd Plant-identification
