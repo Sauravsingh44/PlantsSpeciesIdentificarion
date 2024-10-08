@@ -14,6 +14,14 @@ public class NeuralNetwork {
 
     // Pooling layer parameters
     private int poolSize;
+//    private double[][] reshapedInput;
+    private double[][] reshapedInput;
+    private double[][][] convOutputs;
+    private double[][] pooledOutput;
+    private double[] flattenedPooledOutput;
+    double[] hiddenLayer1;
+    double[] hiddenLayer2;
+    double[] hiddenLayer3;
 
     public NeuralNetwork(int inputSize, int hiddenSize1, int hiddenSize2, int hiddenSize3, int outputSize,
                          int numFilters, int filterSize, int poolSize) {
@@ -206,6 +214,13 @@ public class NeuralNetwork {
             }
             outputLayer[i] += outputBias[i];
         }
+        this.reshapedInput = reshapedInput;
+        this.convOutputs = convOutputs;
+        this.pooledOutput = pooledOutput;
+        this.flattenedPooledOutput = flattenedPooledOutput;
+        this.hiddenLayer1 = hiddenLayer1;
+        this.hiddenLayer2 = hiddenLayer2;
+        this.hiddenLayer3 = hiddenLayer3;
 
         return softmax(outputLayer);
     }
@@ -283,7 +298,68 @@ public class NeuralNetwork {
             }
             hiddenBias1[i] += learningRate * hiddenError1[i];
         }
+
+        double[][][] convError = new double[numFilters][][];
+        for (int f = 0; f < numFilters; f++) {
+            convError[f] = new double[convOutputs[f].length][convOutputs[f][0].length];
+        }
+
+        // Backpropagate from first hidden layer to convolutional layer
+//        double[][][] convError = new double[numFilters][convOutputs[0].length][convOutputs[0][0].length];
+        for (int i = 0; i < hiddenSize1; i++) {
+            for (int j = 0; j < flattenedPooledOutput.length; j++) {
+                int f = j / (pooledOutput.length * pooledOutput[0].length);
+                int row = (j % (pooledOutput.length * pooledOutput[0].length)) / pooledOutput[0].length;
+                int col = j % pooledOutput[0].length;
+                convError[f][row][col] += hiddenError1[i] * weightsInputHidden1[i][j];
+            }
+        }
+
+        // Backpropagate through pooling layer (max pooling)
+        double[][][] unpooledError = new double[numFilters][][];
+        for (int f = 0; f < numFilters; f++) {
+            unpooledError[f] = new double[convOutputs[f].length][convOutputs[f][0].length];
+            for (int i = 0; i < pooledOutput.length; i++) {
+                for (int j = 0; j < pooledOutput[0].length; j++) {
+                    int maxI = 0, maxJ = 0;
+                    double maxVal = Double.NEGATIVE_INFINITY;
+                    for (int m = 0; m < poolSize; m++) {
+                        for (int n = 0; n < poolSize; n++) {
+                            if (convOutputs[f][i * poolSize + m][j * poolSize + n] > maxVal) {
+                                maxVal = convOutputs[f][i * poolSize + m][j * poolSize + n];
+                                maxI = m;
+                                maxJ = n;
+                            }
+                        }
+                    }
+                    unpooledError[f][i * poolSize + maxI][j * poolSize + maxJ] = convError[f][i][j];
+                }
+            }
+        }
+
+        // Update convolutional filters and biases
+        for (int f = 0; f < numFilters; f++) {
+            for (int i = 0; i < filterSize; i++) {
+                for (int j = 0; j < filterSize; j++) {
+                    double filterGradient = 0;
+                    for (int m = 0; m < unpooledError[f].length; m++) {
+                        for (int n = 0; n < unpooledError[f][0].length; n++) {
+                            filterGradient += unpooledError[f][m][n] * reshapedInput[m + i][n + j];
+                        }
+                    }
+                    filters[f][i][j] += learningRate * filterGradient;
+                }
+            }
+            double biasGradient = 0;
+            for (int m = 0; m < unpooledError[f].length; m++) {
+                for (int n = 0; n < unpooledError[f][0].length; n++) {
+                    biasGradient += unpooledError[f][m][n];
+                }
+            }
+            convBias[f] += learningRate * biasGradient;
+        }
     }
+
 
     // Train the neural network
     public void train(double[][] trainData, double[][] trainLabels, int epochs) {
