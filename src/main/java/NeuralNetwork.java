@@ -141,15 +141,17 @@ public class NeuralNetwork {
         }
 
         // Convolutional layer
+        double[][][] convOutputs = new double[numFilters][][];
         double[][] convOutput = new double[reshapedInput.length - filterSize + 1][reshapedInput.length - filterSize + 1];
         for (int i = 0; i < numFilters; i++) {
-            double[][] convResult = convLayer(reshapedInput, filters[i], convBias[i]);
+            convOutputs[i] = convLayer(reshapedInput, filters[i], convBias[i]);
             for (int j = 0; j < convOutput.length; j++) {
                 for (int k = 0; k < convOutput[j].length; k++) {
-                    convOutput[j][k] += convResult[j][k];
+                    convOutput[j][k] += convOutputs[i][j][k];
                 }
             }
         }
+
 
         // Pooling layer
         double[][] pooledOutput = poolLayer(convOutput);
